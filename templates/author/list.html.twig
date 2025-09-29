@@ -1,0 +1,29 @@
+<h1>Liste des Auteurs</h1>
+
+<p>Nombre d'auteurs : {{ totalAuthors }}</p>
+<p>Nombre total de livres : {{ totalBooks }}</p>
+
+{% if authors is not empty %}
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Photo</th>
+            <th>Nom</th>
+            <th>Email</th>
+            <th>Nombre de livres</th>
+            <th>Action</th>
+        </tr>
+        {% for author in authors %}
+            <tr>
+                <td>{{ author.id }}</td>
+                <td><img src="{{ author.picture }}" alt="{{ author.username }}" width="50" height="50"></td>
+                <td>{{ author.username|upper }}</td>
+                <td>{{ author.email }}</td>
+                <td>{{ author.nb_books }}</td>
+                <td><a href="{{ path('app_author_details', {'id': author.id}) }}">Details</a></td>
+            </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>Aucun auteur trouvé.</p>
+{% endif %}
