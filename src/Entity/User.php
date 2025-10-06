@@ -22,8 +22,12 @@ class User
     #[ORM\Column]
     private ?int $age = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $picture = null;
+
+    #[ORM\ManyToOne(inversedBy: 'users')]
+    #[ORM\JoinColumn(referencedColumnName: 'ref', nullable: true)]
+    private ?Classroom $classroom = null;
 
     public function getId(): ?int
     {
@@ -71,9 +75,21 @@ class User
         return $this->picture;
     }
 
-    public function setPicture(string $picture): static
+    public function setPicture(?string $picture): static
     {
         $this->picture = $picture;
+
+        return $this;
+    }
+
+    public function getClassroom(): ?Classroom
+    {
+        return $this->classroom;
+    }
+
+    public function setClassroom(?Classroom $classroom): static
+    {
+        $this->classroom = $classroom;
 
         return $this;
     }

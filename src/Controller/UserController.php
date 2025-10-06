@@ -3,79 +3,119 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Form\UserType;
 use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/user')]
 final class UserController extends AbstractController
 {
-    #[Route(name: 'app_user_index', methods: ['GET'])]
-    public function index(UserRepository $userRepository): Response
+    #[Route('/user', name: 'app_user')]
+    public function index(): Response
     {
         return $this->render('user/index.html.twig', [
-            'users' => $userRepository->findAll(),
+            'controller_name' => 'UserController',
         ]);
     }
 
-    #[Route('/new', name: 'app_user_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    #[Route('/user', name: 'app_user')]
+    public function show(): Response
     {
-        $user = new User();
-        $form = $this->createForm(UserType::class, $user);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($user);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->render('user/new.html.twig', [
-            'user' => $user,
-            'form' => $form,
+        $title = "3A19";
+        $test = "Hello World!";
+        return $this->render('user/index.html.twig', [
+            'title' => $title, 
+            'test' => $test,
         ]);
     }
 
-    #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
-    public function show(User $user): Response
+        #[Route('/show2', name: 'app_show2')]
+    public function show2(): Response
+    {
+        $user=array(
+            array("id"=>1,"name"=>"John","age"=>25,"image"=>"images/img1.jpg"),
+            array("id"=>2,"name"=>"Jane","age"=>30, "image"=>"images/img2.jpg"),
+            array("id"=>3,"name"=>"Doe","age"=>35, "image"=>"images/img3.jpg"));
+        return $this->render('user/list.html.twig', [
+            'users' => $user
+        ]);
+    }
+
+    #[Route('/details/{nom}', name: 'd')]
+    public function details(string $nom): Response
     {
         return $this->render('user/show.html.twig', [
-            'user' => $user,
+            'controller_name' => 'UserController',
+            'nom' => $nom
+        ]);
+    }
+    #[Route('/Listuser', name: 'list_user')]
+    public function ListUser(UserRepository $r , ManagerRegistry $mr): Response //1- injection de dépendance
+    {
+        $result = $r->findAll();  // 2- appel de la méthode findAll() recuperation de tous les utilisateurs
+         //3- transmission des données à la vue
+        return $this->render('user/index.html.twig', [
+            'result' => $result,
         ]);
     }
 
-    #[Route('/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, User $user, EntityManagerInterface $entityManager): Response
+      #[Route('/addUser', name: 'addUser')]
+    public function addUser(ManagerRegistry $mr): Response 
+     //3- l'injection de dépendance managerRegistry
     {
-        $form = $this->createForm(UserType::class, $user);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->render('user/edit.html.twig', [
-            'user' => $user,
-            'form' => $form,
-        ]);
+        //1- creation de l'instance de l'entité User
+        $user = new User();
+        //2- affectation des valeurs aux attributs de l'entité
+        $user->setName("Alice");
+        $user->setAge(28);
+        $user->setEmail("alice@example.com");
+        //4-recuperation de l'entity manager
+        $em=$mr->getManager(); 
+        //5- persister l'entité
+        $em->persist($user);
+        //6- flush
+        $em->flush();
+        //7- redirection vers la liste des utilisateurs
+        return $this->redirectToRoute('list_user');
+    }
+      #[Route('/updateUser/{id}', name: 'updateUser')]
+     public function updateUser(ManagerRegistry $mr,$id, UserRepository $repo): Response 
+     //3- l'injection de dépendance managerRegistry + repository + id
+    {
+        //1- recuperation de l'utilisateur à modifier
+       $user = $repo->find($id);
+        //2- affectation des nouvelles valeurs aux attributs de l'entité
+        $user->setName("amir");
+        $user->setAge(29);
+        $user->setEmail("amir@yazidi.com");
+        //4-recuperation de l'entity manager
+        $em=$mr->getManager(); 
+        //5- persister l'entité
+        $em->persist($user);
+        //6- flush
+        $em->flush();
+        //7- redirection vers la liste des utilisateurs
+        return $this->redirectToRoute('list_user');
     }
 
-    #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]
-    public function delete(Request $request, User $user, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($user);
-            $entityManager->flush();
-        }
+    #[Route('/deleteUser/{id}', name: 'deleteUser')]
+    public function deleteUser(ManagerRegistry $mr,$id, UserRepository $repo): Response 
+    //3- l'injection de dépendance managerRegistry + repository + id
+   {
+       //1- recuperation de l'utilisateur à modifier
+       $user = $repo->find($id);
+       //4-recuperation de l'entity manager
+       $em=$mr->getManager(); 
+       //5- persister l'entité
+       $em->remove($user);
+       //6- flush
+       $em->flush();
+       //7- redirection vers la liste des utilisateurs
+       return $this->redirectToRoute('list_user');
+   }
 
-        return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
-    }
+
+    
+    
 }
